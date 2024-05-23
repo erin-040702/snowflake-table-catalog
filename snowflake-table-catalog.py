@@ -8,7 +8,8 @@ st.set_page_config(layout="wide")
 # Uses st.experimental_singleton to only run once.
 
 
-@st.experimental_singleton
+##@st.experimental_singleton -- this has deprecated, use below instead
+@st.cache_resource
 def init_connection():
     return snowflake.connector.connect(**st.secrets["snowflake"])
 
@@ -19,7 +20,8 @@ cur = conn.cursor()
 # Perform query.
 # Uses st.experimental_memo to only rerun when the query changes or after 10 min.
 
-@st.experimental_memo(ttl=600)
+##@st.experimental_memo(ttl=600) -- this has deprecated, use below instead
+@st.cache_data(ttl=600)
 def run_query(query):
     with conn.cursor() as cur:
         cur.execute(query)
@@ -163,7 +165,10 @@ if 'selectbox_database_key' not in st.session_state:
 
 # Table Catalog/Database
 fv_database = df['TABLE_CATALOG'].drop_duplicates()
-fv_database = fv_database.append(all_option)
+## fv_database = fv_database.append(all_option) -- append not supported in Pandas, use below line instead
+all_option = pd.Series(['All'], index=[9999999])
+# Combine using pd.concat
+fv_database = pd.concat([fv_database, all_option])
 
 selectbox_database = st.sidebar.selectbox(
     'Database', fv_database, index=len(fv_database)-1, key=st.session_state.selectbox_database_key)
@@ -175,7 +180,9 @@ else:
 
 # Table Schema
 fv_table_schema = df['TABLE_SCHEMA'].drop_duplicates()
-fv_table_schema = fv_table_schema.append(all_option)
+##fv_table_schema = fv_table_schema.append(all_option) -- append not supported by Pandas, use next line instead
+# Use pd.concat to combine with all_option
+fv_table_schema = pd.concat([fv_table_schema, all_option])
 
 selectbox_schema = st.sidebar.selectbox(
     "Table Schema", fv_table_schema, len(fv_table_schema)-1, key=st.session_state.selectbox_schema_key)
@@ -187,7 +194,9 @@ else:
 
 # Table Owner
 fv_owner = df['TABLE_OWNER'].drop_duplicates()
-fv_owner = fv_owner.append(all_option)
+# fv_owner = fv_owner.append(all_option) -- append not supported by Pandas, use next line instead
+# Use pd.concat to combine with all_option
+fv_owner = pd.concat([fv_owner, all_option])
 selectbox_owner = st.sidebar.selectbox(
     "Table Owner", fv_owner, len(fv_owner)-1, key=st.session_state.selectbox_owner_key)
 
